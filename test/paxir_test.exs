@@ -8,10 +8,15 @@ defmodule PaxirTest do
   )
 
   test "basic" do
-    # assert 3 == paxir! ~~(3)
-    # quote do identity end |> IO.inspect(label: "indent fun")
-    # assert identity("a") == "a"
-    # assert identity2(1, 2) == 2
+    assert 3 == paxir! ~~(3)
+    assert identity("a") == "a"
+    assert identity2(1, 2) == 2
     assert 2 == paxir! ~~((+ 1 1))
+  end
+
+
+  test "lists" do
+    assert [1, :abc, "a", ~c"b", false, true, nil] == paxir! ~~([1 :abc "a" 'b' false true nil])
+    assert [1, 2, 3] == paxir! ~~([1 2 (identity 3)])
   end
 end

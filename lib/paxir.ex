@@ -4,16 +4,32 @@ defmodule Paxir do
   end
 
   defp eval_expr(expr) do
-     case expr do
+    case expr do
       {:sequence_paren, _meta, [{:def, def_meta, nil} | args]} ->
         handle_def(def_meta, args)
 
       {:sequence_paren, _meta, [{function_name, fun_meta, _} | args]} ->
-         {function_name, fun_meta, args}
+        {function_name, fun_meta, args}
+
+      {:sequence_block, _meta, :"()", [{function_name, fun_meta, _} | args ]} ->
+        {function_name, fun_meta, args}
+
+      {:sequence_bracket, _meta, content} when is_list(content) ->
+        Enum.map(content, &eval_expr/1)
+
+      {true, _meta, nil} ->
+        true
+
+      {false, _meta, nil} ->
+        false
+
+      {:sequence_token, _meta, nil} ->
+        nil
 
       # let Elixir handle basic types
       passthrough ->
         passthrough
+        |> IO.inspect(label: "passthrough")
     end
   end
 
