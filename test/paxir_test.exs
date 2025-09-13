@@ -25,8 +25,8 @@ defmodule PaxirTest do
     assert {123, 99} = paxir! ~~({123 (identity 99)})
   end
 
-  # test "keyword lists" do
-  #   assert [yeo: 1] == paxir! ~~([:yeo 1])
-  # end
+  test "keyword lists" do
+    assert [yeo: 1, other: "yo"] == paxir! ~~([{:yeo 1} {:other "yo"}])
+  end
 
 end

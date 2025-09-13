@@ -14,6 +14,9 @@ defmodule Paxir do
       {:sequence_block, _meta, :"()", [{function_name, fun_meta, _} | args]} ->
         {function_name, fun_meta, args}
 
+      {:sequence_block, _meta, :"{}", content} ->
+        List.to_tuple(content)
+
       {:sequence_bracket, _meta, content} when is_list(content) ->
         Enum.map(content, &eval_expr/1)
 
