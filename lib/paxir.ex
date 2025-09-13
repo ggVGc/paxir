@@ -1,18 +1,15 @@
 defmodule Paxir do
   defmacro paxir!({:sequence_literal, _meta, exprs}) do
-    elixir_exprs = Enum.map(exprs, &eval_expr/1)
-    {:__block__, [], elixir_exprs}
+    {:__block__, [], Enum.map(exprs, &eval_expr/1)}
   end
 
   defp eval_expr(expr) do
-    expr |> IO.inspect(label: "expr")
-
-    case expr do
-      {:sequence_paren, _meta, []} ->
-        raise "Empty braces"
-
+     case expr do
       {:sequence_paren, _meta, [{:def, def_meta, nil} | args]} ->
         handle_def(def_meta, args)
+
+      {:sequence_paren, _meta, [{function_name, fun_meta, _} | args]} ->
+         {function_name, fun_meta, args}
 
       # let Elixir handle basic types
       passthrough ->
