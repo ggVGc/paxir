@@ -6,10 +6,10 @@ defmodule PaxirTest do
     (def identity (a) a)
     (def identity2 (_a b) b)
 
-    # (def multistatements (x)
-    #   (= result (+ x x)
-    #   result)
-    # )
+    # Multiple statements in def
+    (def double (x)
+      (= result (+ x x))
+      result)
   )
 
   test "basic" do
@@ -17,6 +17,7 @@ defmodule PaxirTest do
     assert identity("a") == "a"
     assert identity2(1, 2) == 2
     assert 2 == paxir! ~~((+ 1 1))
+    assert double(3) == 6
   end
 
   test "assignment" do
