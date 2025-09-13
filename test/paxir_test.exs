@@ -5,6 +5,11 @@ defmodule PaxirTest do
   paxir! ~~(
     (def identity (a) a)
     (def identity2 (_a b) b)
+
+    # (def multistatements (x)
+    #   (= result (+ x x)
+    #   result)
+    # )
   )
 
   test "basic" do
@@ -14,6 +19,10 @@ defmodule PaxirTest do
     assert 2 == paxir! ~~((+ 1 1))
   end
 
+  test "assignment" do
+    paxir! ~~((= added (+ 1 1)))
+    assert added == 2
+  end
 
   test "lists" do
     assert [1, :abc, "a", ~c"b", false, true, nil] == paxir! ~~([1 :abc "a" 'b' false true nil])
@@ -28,5 +37,4 @@ defmodule PaxirTest do
   test "keyword lists" do
     assert [yeo: 1, other: "yo"] == paxir! ~~([{:yeo 1} {:other "yo"}])
   end
-
 end
