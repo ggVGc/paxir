@@ -13,6 +13,9 @@ defmodule Paxir do
       {:sequence_paren, _meta, [{:defp, def_meta, nil} | args]} ->
         handle_def(:defp, def_meta, args)
 
+      {:sequence_paren, _, [{:%, meta, nil} | args]} ->
+        {:%{}, meta, Enum.map(args, &eval_expr/1)}
+
       {:sequence_paren, _meta, [{function_name, fun_meta, _} | args]} ->
         {function_name, fun_meta, Enum.map(args, &eval_expr/1)}
 
@@ -47,7 +50,10 @@ defmodule Paxir do
     |> IO.inspect(label: "OUT")
   end
 
-  defp handle_def(def_type, _meta, [{name, name_meta, nil}, {:sequence_block, block_meta, _, params} | body])
+  defp handle_def(def_type, _meta, [
+         {name, name_meta, nil},
+         {:sequence_block, block_meta, _, params} | body
+       ])
        when is_atom(name) do
     body = Enum.map(body, &eval_expr/1)
     {def_type, block_meta, [{name, name_meta, params}, [do: {:__block__, [], body}]]}

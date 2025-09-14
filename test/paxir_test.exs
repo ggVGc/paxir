@@ -38,4 +38,9 @@ defmodule PaxirTest do
   test "keyword lists" do
     assert [yeo: 1, other: "yo"] == paxir! ~~([{:yeo 1} {:other "yo"}])
   end
+
+  test "dicts" do
+    dict = paxir! ~~((% {:a 123}))
+    assert dict == %{a: 123}
+  end
 end
