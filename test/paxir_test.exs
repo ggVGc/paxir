@@ -4,7 +4,7 @@ defmodule PaxirTest do
 
   paxir! ~~(
     (def identity (a) a)
-    (def identity2 (_a b) b)
+    (defp identity2 (_a b) b)
 
     # Multiple statements in def
     (def double (x)
