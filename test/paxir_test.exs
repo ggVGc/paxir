@@ -18,6 +18,9 @@ defmodule PaxirTest do
     assert identity2(1, 2) == 2
     assert 2 == paxir! ~~((+ 1 1))
     assert double(3) == 6
+
+    var = 10
+    assert 20 == paxir! ~~((double var))
   end
 
   test "assignment" do
@@ -40,10 +43,18 @@ defmodule PaxirTest do
   end
 
   test "dicts" do
+    # Explicit tuples
     dict = paxir! ~~((% :a 1 :b 2))
     assert dict == %{a: 1, b: 2}
 
+    # With syntax sugar
     dict = paxir! ~~((% x: 3))
     assert dict == %{x: 3}
+
+
+    # Variable key
+    number = 10
+    dict = paxir! ~~((% number "yep"))
+    assert dict == %{number => "yep"}
   end
 end

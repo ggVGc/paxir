@@ -58,10 +58,10 @@ defmodule Paxir do
     {def_type, block_meta, [{name, name_meta, params}, [do: {:__block__, [], body}]]}
   end
 
-  defp get_dict_key({atom, _meta, nil}) when is_atom(atom) do
+  defp get_dict_key({atom, _meta, _value} = passthrough) when is_atom(atom) do
     case String.split(Atom.to_string(atom), ":") do
       [atom, ""] -> String.to_atom(atom)
-      _ -> atom
+      _ -> passthrough
     end
     |> IO.inspect(label: "ATOM")
   end
