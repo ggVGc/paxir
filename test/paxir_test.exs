@@ -56,5 +56,9 @@ defmodule PaxirTest do
     number = 10
     dict = paxir! ~~((% number "yep"))
     assert dict == %{number => "yep"}
+
+    # Expression key
+    dict = paxir! ~~((% (double 2) :yep))
+    assert dict == %{double(2) => :yep}
   end
 end
