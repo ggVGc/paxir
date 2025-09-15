@@ -42,10 +42,9 @@ defmodule Paxir do
       {:sequence_token, _meta, nil} ->
         nil
 
-      # let Elixir handle basic types
       passthrough ->
         passthrough
-        |> IO.inspect(label: "passthrough")
+        # |> IO.inspect(label: "passthrough")
     end
     |> IO.inspect(label: "OUT")
   end
@@ -59,13 +58,23 @@ defmodule Paxir do
     {def_type, block_meta, [{name, name_meta, params}, [do: {:__block__, [], body}]]}
   end
 
+  defp get_dict_key({atom, _meta, nil}) when is_atom(atom) do
+    case String.split(Atom.to_string(atom), ":") do
+      [atom, ""] -> String.to_atom(atom)
+      _ -> atom
+    end
+    |> IO.inspect(label: "ATOM")
+  end
+
+  defp get_dict_key(expr), do: eval_expr(expr)
+
   defp build_dict(meta, args) do
     args =
       args
       |> Enum.chunk_every(2)
       |> Enum.map(fn
-        [key, value] ->
-          elixir_key = eval_expr(key)
+        [key_expr, value] ->
+          elixir_key = get_dict_key(key_expr)
           elixir_value = eval_expr(value)
           {elixir_key, elixir_value}
 

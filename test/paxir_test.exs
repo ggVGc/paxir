@@ -42,5 +42,8 @@ defmodule PaxirTest do
   test "dicts" do
     dict = paxir! ~~((% :a 1 :b 2))
     assert dict == %{a: 1, b: 2}
+
+    dict = paxir! ~~((% x: 3))
+    assert dict == %{x: 3}
   end
 end
