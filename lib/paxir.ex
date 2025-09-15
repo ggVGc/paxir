@@ -19,8 +19,8 @@ defmodule Paxir do
       {:sequence_paren, _meta, [{function_name, fun_meta, _} | args]} ->
         {function_name, fun_meta, Enum.map(args, &eval_expr/1)}
 
-      {:sequence_bracket, _meta, content} when is_list(content) ->
-        Enum.map(content, &eval_expr/1)
+      {:sequence_bracket, meta, content} when is_list(content) ->
+        build_list(meta, content)
 
       {:sequence_brace, _meta, content} when is_list(content) ->
         content
@@ -58,23 +58,27 @@ defmodule Paxir do
     {def_type, block_meta, [{name, name_meta, params}, [do: {:__block__, [], body}]]}
   end
 
-  defp get_dict_key({atom, _meta, _value} = passthrough) when is_atom(atom) do
+  defp get_colon_suffix_atom({atom, _meta, _value}) when is_atom(atom) do
     case String.split(Atom.to_string(atom), ":") do
       [atom, ""] -> String.to_atom(atom)
-      _ -> passthrough
+      _ -> nil
     end
-    |> IO.inspect(label: "ATOM")
   end
 
-  defp get_dict_key(expr), do: eval_expr(expr)
+  defp get_colon_suffix_atom(_expr), do: nil
 
-  defp build_dict(meta, args) do
-    args =
-      args
+  defp build_dict(meta, pairs) do
+    pairs =
+      pairs
       |> Enum.chunk_every(2)
       |> Enum.map(fn
         [key_expr, value] ->
-          elixir_key = get_dict_key(key_expr)
+          elixir_key =
+            case get_colon_suffix_atom(key_expr) do
+              nil -> eval_expr(key_expr)
+              key -> key
+            end
+
           elixir_value = eval_expr(value)
           {elixir_key, elixir_value}
 
@@ -82,6 +86,28 @@ defmodule Paxir do
           raise "Dict construction requires even number of arguments, got odd key: #{inspect(key)}"
       end)
 
-    {:%{}, meta, args}
+    {:%{}, meta, pairs}
+  end
+
+  defp build_list(_meta, content) do
+    content =
+      content
+      |> Enum.chunk_every(2)
+      |> Enum.map(fn
+        [key_expr, value] ->
+          case get_colon_suffix_atom(key_expr) do
+            nil ->
+              [eval_expr(key_expr), eval_expr(value)]
+
+            key ->
+              [{key, eval_expr(value)}]
+          end
+
+        [expr] ->
+          [eval_expr(expr)]
+      end)
+      |> Enum.concat()
+
+    content
   end
 end

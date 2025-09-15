@@ -17,6 +17,7 @@ defmodule PaxirTest do
     assert identity("a") == "a"
     assert identity2(1, 2) == 2
     assert 2 == paxir! ~~((+ 1 1))
+    assert ~c"a" == paxir! ~~((identity 'a'))
     assert double(3) == 6
 
     var = 10
@@ -29,7 +30,7 @@ defmodule PaxirTest do
   end
 
   test "lists" do
-    assert [1, :abc, "a", ~c"b", false, true, nil] == paxir! ~~([1 :abc "a" 'b' false true nil])
+    assert [~c"b", 1, :abc, "a", false, true, nil] == paxir! ~~(['b' 1 :abc "a"  false true nil])
     assert [3] == paxir! ~~([(identity 3)])
   end
 
@@ -39,7 +40,11 @@ defmodule PaxirTest do
   end
 
   test "keyword lists" do
+    # Explicit tuples
     assert [yeo: 1, other: "yo"] == paxir! ~~([{:yeo 1} {:other "yo"}])
+
+    # Syntax sugar
+    assert [key: "value", other_key: :other] == paxir! ~~([key: "value" other_key: :other])
   end
 
   test "dicts" do
@@ -50,7 +55,6 @@ defmodule PaxirTest do
     # With syntax sugar
     dict = paxir! ~~((% x: 3))
     assert dict == %{x: 3}
-
 
     # Variable key
     number = 10
