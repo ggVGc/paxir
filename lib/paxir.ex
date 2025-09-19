@@ -1,37 +1,37 @@
 defmodule Paxir do
-  defmacro paxir!({:sequence_literal, _meta, exprs}) do
+  defmacro paxir!({:raw_section, _meta, exprs}) do
     {:__block__, [], Enum.map(exprs, &eval_expr/1)}
   end
 
-  defp eval_expr(expr) do
+  def eval_expr(expr) do
     expr |> IO.inspect(label: "IN")
 
     case expr do
-      {:sequence_paren, _meta, [{:def, def_meta, nil} | args]} ->
+      {:raw_paren, _meta, [{:def, def_meta, nil} | args]} ->
         handle_def(:def, def_meta, args)
 
-      {:sequence_paren, _meta, [{:defp, def_meta, nil} | args]} ->
+      {:raw_paren, _meta, [{:defp, def_meta, nil} | args]} ->
         handle_def(:defp, def_meta, args)
 
-      {:sequence_paren, _meta, [{:%, dict_meta, nil} | args]} ->
+      {:raw_paren, _meta, [{:%, dict_meta, nil} | args]} ->
         build_dict(dict_meta, args)
 
-      {:sequence_paren, _meta, [{function_name, fun_meta, _} | args]} ->
+      {:raw_paren, _meta, [{function_name, fun_meta, _} | args]} ->
         {function_name, fun_meta, Enum.map(args, &eval_expr/1)}
 
-      {:sequence_bracket, meta, content} when is_list(content) ->
+      {:raw_bracket, meta, content} when is_list(content) ->
         build_list(meta, content)
 
-      {:sequence_brace, _meta, content} when is_list(content) ->
+      {:raw_brace, _meta, content} when is_list(content) ->
         content
         |> Enum.map(&eval_expr/1)
         |> List.to_tuple()
 
-      {:sequence_block, meta, :"()", content} ->
-        eval_expr({:sequence_paren, meta, content})
+      {:raw_block, meta, :"()", content} ->
+        eval_expr({:raw_paren, meta, content})
 
-      {:sequence_block, meta, :{}, content} ->
-        eval_expr({:sequence_brace, meta, content})
+      {:raw_block, meta, :{}, content} ->
+        eval_expr({:raw_brace, meta, content})
 
       {true, _meta, nil} ->
         true
@@ -39,7 +39,7 @@ defmodule Paxir do
       {false, _meta, nil} ->
         false
 
-      {:sequence_token, _meta, nil} ->
+      {:raw_token, _meta, nil} ->
         nil
 
       passthrough ->
@@ -51,7 +51,7 @@ defmodule Paxir do
 
   defp handle_def(def_type, _meta, [
          {name, name_meta, nil},
-         {:sequence_block, block_meta, _, params} | body
+         {:raw_block, block_meta, _, params} | body
        ])
        when is_atom(name) do
     body = Enum.map(body, &eval_expr/1)

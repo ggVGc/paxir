@@ -47,6 +47,7 @@ defmodule PaxirTest do
     assert [key: "value", other_key: :other] == paxir! ~~([key: "value" other_key: :other])
   end
 
+
   test "dicts" do
     # Explicit tuples
     dict = paxir! ~~((% :a 1 :b 2))
@@ -65,4 +66,17 @@ defmodule PaxirTest do
     dict = paxir! ~~((% (double 2) :yep))
     assert dict == %{double(2) => :yep}
   end
+
+
+
+  test "pattern match function arguments" do
+    {:raw_section, _, [expr]} = quote do ~~(
+      (def match_tuple ({a b}) a)
+    )
+    end
+
+    assert Paxir.eval_expr(expr) == []
+  end
+
+
 end
