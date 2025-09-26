@@ -7,31 +7,28 @@ defmodule Paxir do
     expr |> IO.inspect(label: "IN")
 
     case expr do
-      {:raw_paren, _meta, [{:def, def_meta, nil} | args]} ->
+      {:raw_block, _meta, :"()", [{:def, def_meta, nil} | args]} ->
         handle_def(:def, def_meta, args)
 
-      {:raw_paren, _meta, [{:defp, def_meta, nil} | args]} ->
+      {:raw_block, _meta, :"()", [{:defp, def_meta, nil} | args]} ->
         handle_def(:defp, def_meta, args)
 
-      {:raw_paren, _meta, [{:%, dict_meta, nil} | args]} ->
+      {:raw_block, _meta, :"()", [{:%, dict_meta, nil} | args]} ->
         build_dict(dict_meta, args)
 
-      {:raw_paren, _meta, [{function_name, fun_meta, _} | args]} ->
+      {:raw_block, _meta, :"()", [{function_name, fun_meta, _} | args]} ->
         {function_name, fun_meta, Enum.map(args, &eval_expr/1)}
-
-      {:raw_bracket, meta, content} when is_list(content) ->
-        build_list(meta, content)
-
-      {:raw_brace, _meta, content} when is_list(content) ->
-        content
-        |> Enum.map(&eval_expr/1)
-        |> List.to_tuple()
 
       {:raw_block, meta, :"()", content} ->
         eval_expr({:raw_paren, meta, content})
 
-      {:raw_block, meta, :{}, content} ->
-        eval_expr({:raw_brace, meta, content})
+      {:raw_block, _meta, :{}, content} ->
+        content
+        |> Enum.map(&eval_expr/1)
+        |> List.to_tuple()
+
+      {:raw_block, meta, :"[]", content} ->
+        build_list(meta, content)
 
       {true, _meta, nil} ->
         true
