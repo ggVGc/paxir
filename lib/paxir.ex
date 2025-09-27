@@ -7,6 +7,17 @@ defmodule Paxir do
     expr |> IO.inspect(label: "IN")
 
     case expr do
+      {:raw_block, meta, :"()", [{:fn, fn_meta, _}, {:raw_block, _block_meta, _, params} | body]} ->
+        params = Enum.map(params, &eval_expr/1)
+
+        body =
+          case Enum.map(body, &eval_expr/1) do
+            [single] -> single
+            body -> {:__block__, [], body}
+          end
+
+        {:fn, meta, [{:->, fn_meta, [params, body]}]}
+
       {:raw_block, _meta, :"()", [{:def, def_meta, _} | args]} ->
         handle_def(:def, def_meta, args)
 
@@ -49,8 +60,9 @@ defmodule Paxir do
          {:raw_block, _block_meta, _, params} | body
        ])
        when is_atom(name) do
-    body = Enum.map(body, &eval_expr/1)
     params = Enum.map(params, &eval_expr/1)
+
+    body = Enum.map(body, &eval_expr/1)
 
     body =
       case body do

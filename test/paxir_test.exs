@@ -116,4 +116,21 @@ defmodule PaxirTest do
       assert Paxir.eval_expr(literal_def) == elixir_literal_def
     end
   end
+
+  test "anonymous function" do
+    {:raw_section, _, [expr]} =
+      quote do
+        ~~((fn (a) (= x a) x))
+      end
+
+    elixir_expr =
+      quote do
+        fn a ->
+          x = a
+          x
+        end
+      end
+
+    assert Paxir.eval_expr(expr) == elixir_expr
+  end
 end
