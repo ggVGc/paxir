@@ -132,5 +132,8 @@ defmodule PaxirTest do
       end
 
     assert Paxir.eval_expr(expr) == elixir_expr
+    anon = paxir!(~~((fn (a) (= x a) x)))
+    assert anon.(:yeo) == :yeo
+    assert 42 = paxir!(~~(anon 42))
   end
 end
