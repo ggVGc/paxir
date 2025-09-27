@@ -1,9 +1,13 @@
 defmodule Paxir do
   defmacro paxir!({:raw_section, _meta, exprs}) do
-    {:__block__, [], Enum.map(exprs, &eval_expr/1)}
+    {:__block__, [],
+     Enum.map(
+       exprs,
+       fn expr -> eval_expr(expr, Map.keys(__CALLER__.versioned_vars)) end
+     )}
   end
 
-  def eval_expr(expr) do
+  def eval_expr(expr, caller_vars \\ %{}) do
     expr |> IO.inspect(label: "IN")
 
     case expr do
@@ -27,8 +31,18 @@ defmodule Paxir do
       {:raw_block, _meta, :"()", [{:%, dict_meta, nil} | args]} ->
         build_dict(dict_meta, args)
 
-      {:raw_block, _meta, :"()", [{function_name, fun_meta, _} | args]} ->
-        {function_name, fun_meta, Enum.map(args, &eval_expr/1)}
+      {:raw_block, _meta, :"()", [{function_name, fun_meta, ctx} | args]} ->
+        is_local =
+          Enum.any?(caller_vars, fn
+            {^function_name, nil} -> true
+            _ -> false
+          end)
+
+        if is_local do
+          {{:., [], [{function_name, [], ctx}]}, [], Enum.map(args, &eval_expr/1)}
+        else
+          {function_name, fun_meta, Enum.map(args, &eval_expr/1)}
+        end
 
       {:raw_block, _meta, :{}, content} ->
         content

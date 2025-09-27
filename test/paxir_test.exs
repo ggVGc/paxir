@@ -23,6 +23,7 @@ defmodule PaxirTest do
 
     var = 10
     assert 20 == paxir!(~~((double var)))
+    assert :yeo == paxir!(~~((identity :yeo)))
   end
 
   test "assignment" do
@@ -134,6 +135,10 @@ defmodule PaxirTest do
     assert Paxir.eval_expr(expr) == elixir_expr
     anon = paxir!(~~((fn (a) (= x a) x)))
     assert anon.(:yeo) == :yeo
-    assert 42 = paxir!(~~(anon 42))
+  end
+
+  test "call anonymous function" do
+    local_identity = fn x -> x end
+    assert :yep == paxir!(~~((local_identity :yep)))
   end
 end
