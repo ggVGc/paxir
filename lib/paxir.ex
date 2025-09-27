@@ -7,10 +7,10 @@ defmodule Paxir do
     expr |> IO.inspect(label: "IN")
 
     case expr do
-      {:raw_block, _meta, :"()", [{:def, def_meta, nil} | args]} ->
+      {:raw_block, _meta, :"()", [{:def, def_meta, _} | args]} ->
         handle_def(:def, def_meta, args)
 
-      {:raw_block, _meta, :"()", [{:defp, def_meta, nil} | args]} ->
+      {:raw_block, _meta, :"()", [{:defp, def_meta, _} | args]} ->
         handle_def(:defp, def_meta, args)
 
       {:raw_block, _meta, :"()", [{:%, dict_meta, nil} | args]} ->
@@ -18,9 +18,6 @@ defmodule Paxir do
 
       {:raw_block, _meta, :"()", [{function_name, fun_meta, _} | args]} ->
         {function_name, fun_meta, Enum.map(args, &eval_expr/1)}
-
-      {:raw_block, meta, :"()", content} ->
-        eval_expr({:raw_paren, meta, content})
 
       {:raw_block, _meta, :{}, content} ->
         content
@@ -41,18 +38,27 @@ defmodule Paxir do
 
       passthrough ->
         passthrough
-        # |> IO.inspect(label: "passthrough")
+        |> IO.inspect(label: "passthrough")
     end
-    |> IO.inspect(label: "OUT")
+
+    # |> IO.inspect(label: "OUT")
   end
 
-  defp handle_def(def_type, _meta, [
-         {name, name_meta, nil},
-         {:raw_block, block_meta, _, params} | body
+  defp handle_def(def_type, def_meta, [
+         {name, _name_meta, ctx},
+         {:raw_block, _block_meta, _, params} | body
        ])
        when is_atom(name) do
     body = Enum.map(body, &eval_expr/1)
-    {def_type, block_meta, [{name, name_meta, params}, [do: {:__block__, [], body}]]}
+    params = Enum.map(params, &eval_expr/1)
+
+    body =
+      case body do
+        [single] -> single
+        _ -> {:__block__, [], body}
+      end
+
+    {def_type, def_meta, [{name, [context: ctx], params}, [do: body]]}
   end
 
   defp get_colon_suffix_atom({atom, _meta, _value}) when is_atom(atom) do
