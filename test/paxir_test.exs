@@ -26,6 +26,12 @@ defmodule PaxirTest do
     assert :yeo == paxir!(~~((identity :yeo)))
   end
 
+  test "call function" do
+    {:raw_section, _, [expr]} = quote do: ~~((identity 42))
+    elixir_expr = quote do: identity(42)
+    assert Paxir.eval_expr(expr) == elixir_expr
+  end
+
   test "assignment" do
     paxir!(~~((= added (+ 1 1))))
     assert added == 2
@@ -71,9 +77,7 @@ defmodule PaxirTest do
   describe "pattern match function arguments" do
     test "tuple" do
       {:raw_section, _, [tuple_def]} =
-        quote do
-          ~~((def match_tuple ({a b}) a))
-        end
+        quote do: ~~((def match_tuple ({a b}) a))
 
       elixir_tuple_def =
         quote do
@@ -87,9 +91,7 @@ defmodule PaxirTest do
 
     test "list" do
       {:raw_section, _, [list_def]} =
-        quote do
-          ~~((def match_list ([a b]) a))
-        end
+        quote do: ~~((def match_list ([a b]) a))
 
       elixir_list_def =
         quote do
@@ -103,9 +105,7 @@ defmodule PaxirTest do
 
     test "literal" do
       {:raw_section, _, [literal_def]} =
-        quote do
-          ~~((def match_literal (123) 99))
-        end
+        quote do: ~~((def match_literal (123) 99))
 
       elixir_literal_def =
         quote do
@@ -120,9 +120,7 @@ defmodule PaxirTest do
 
   test "anonymous function" do
     {:raw_section, _, [expr]} =
-      quote do
-        ~~((fn (a) (= x a) x))
-      end
+      quote do: ~~((fn (a) (= x a) x))
 
     elixir_expr =
       quote do
