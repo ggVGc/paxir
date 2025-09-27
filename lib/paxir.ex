@@ -11,38 +11,8 @@ defmodule Paxir do
     expr |> IO.inspect(label: "IN")
 
     case expr do
-      {:raw_block, meta, :"()", [{:fn, fn_meta, _}, {:raw_block, _block_meta, _, params} | body]} ->
-        params = Enum.map(params, &eval_expr/1)
-
-        body =
-          case Enum.map(body, &eval_expr/1) do
-            [single] -> single
-            body -> {:__block__, [], body}
-          end
-
-        {:fn, meta, [{:->, fn_meta, [params, body]}]}
-
-      {:raw_block, _meta, :"()", [{:def, def_meta, _} | args]} ->
-        handle_def(:def, def_meta, args)
-
-      {:raw_block, _meta, :"()", [{:defp, def_meta, _} | args]} ->
-        handle_def(:defp, def_meta, args)
-
-      {:raw_block, _meta, :"()", [{:%, dict_meta, nil} | args]} ->
-        build_dict(dict_meta, args)
-
-      {:raw_block, _meta, :"()", [{function_name, fun_meta, ctx} | args]} ->
-        is_local =
-          Enum.any?(caller_vars, fn
-            {^function_name, nil} -> true
-            _ -> false
-          end)
-
-        if is_local do
-          {{:., [], [{function_name, [], ctx}]}, [], Enum.map(args, &eval_expr/1)}
-        else
-          {function_name, fun_meta, Enum.map(args, &eval_expr/1)}
-        end
+      {:raw_block, meta, :"()", content} ->
+        handle_parens(meta, caller_vars, content)
 
       {:raw_block, _meta, :{}, content} ->
         content
@@ -63,10 +33,48 @@ defmodule Paxir do
 
       passthrough ->
         passthrough
-        |> IO.inspect(label: "passthrough")
+        # |> IO.inspect(label: "passthrough")
     end
 
     # |> IO.inspect(label: "OUT")
+  end
+
+  defp handle_parens(meta, _caller_vars, [
+         {:fn, fn_meta, _},
+         {:raw_block, _block_meta, _, params} | body
+       ]) do
+    params = Enum.map(params, &eval_expr/1)
+
+    body =
+      case Enum.map(body, &eval_expr/1) do
+        [single] -> single
+        body -> {:__block__, [], body}
+      end
+
+    {:fn, meta, [{:->, fn_meta, [params, body]}]}
+  end
+
+  defp handle_parens(_meta, _caller_vars, [{def_type, def_meta, _} | args])
+       when def_type in [:def, :defp] do
+    handle_def(def_type, def_meta, args)
+  end
+
+  defp handle_parens(_meta, _caller_vars, [{:%, dict_meta, nil} | args]) do
+    build_dict(dict_meta, args)
+  end
+
+  defp handle_parens(_meta, caller_vars, [{function_name, fun_meta, ctx} | args]) do
+    is_local =
+      Enum.any?(caller_vars, fn
+        {^function_name, nil} -> true
+        _ -> false
+      end)
+
+    if is_local do
+      {{:., [], [{function_name, [], ctx}]}, [], Enum.map(args, &eval_expr/1)}
+    else
+      {function_name, fun_meta, Enum.map(args, &eval_expr/1)}
+    end
   end
 
   defp handle_def(def_type, def_meta, [
@@ -76,12 +84,10 @@ defmodule Paxir do
        when is_atom(name) do
     params = Enum.map(params, &eval_expr/1)
 
-    body = Enum.map(body, &eval_expr/1)
-
     body =
-      case body do
+      case Enum.map(body, &eval_expr/1) do
         [single] -> single
-        _ -> {:__block__, [], body}
+        body -> {:__block__, [], body}
       end
 
     {def_type, def_meta, [{name, [context: ctx], params}, [do: body]]}
