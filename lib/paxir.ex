@@ -44,14 +44,14 @@ defmodule Paxir do
          {:raw_block, _block_meta, _, params} | body
        ]) do
     params = Enum.map(params, &eval_expr/1)
+    {:fn, meta, [{:->, fn_meta, [params, eval_body(body)]}]}
+  end
 
-    body =
-      case Enum.map(body, &eval_expr/1) do
-        [single] -> single
-        body -> {:__block__, [], body}
-      end
-
-    {:fn, meta, [{:->, fn_meta, [params, body]}]}
+  defp handle_parens(meta, _caller_vars, [
+         {:defmodule, mod_meta, _},
+         {module_name, _, _} | body
+       ]) do
+    {:defmodule, mod_meta, [{:__aliases__, [alias: false], [module_name]}, [do: eval_body(body)]]}
   end
 
   defp handle_parens(_meta, _caller_vars, [{def_type, def_meta, _} | args])
@@ -77,20 +77,20 @@ defmodule Paxir do
     end
   end
 
+  defp eval_body(body) do
+    case Enum.map(body, &eval_expr/1) do
+      [single] -> single
+      body -> {:__block__, [], body}
+    end
+  end
+
   defp handle_def(def_type, def_meta, [
          {name, _name_meta, ctx},
          {:raw_block, _block_meta, _, params} | body
        ])
        when is_atom(name) do
     params = Enum.map(params, &eval_expr/1)
-
-    body =
-      case Enum.map(body, &eval_expr/1) do
-        [single] -> single
-        body -> {:__block__, [], body}
-      end
-
-    {def_type, def_meta, [{name, [context: ctx], params}, [do: body]]}
+    {def_type, def_meta, [{name, [context: ctx], params}, [do: eval_body(body)]]}
   end
 
   defp get_colon_suffix_atom({atom, _meta, _value}) when is_atom(atom) do

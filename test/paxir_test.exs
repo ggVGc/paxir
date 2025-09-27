@@ -2,15 +2,17 @@ defmodule PaxirTest do
   use ExUnit.Case
   import Paxir
 
-  paxir!(
-    # Multiple statements in def
-    ~~(
+  paxir!(~~(
     (def identity (a) a)
     (defp identity2 (_a b) b)
     (def double (x)
-    (= result (+ x x))
-    result)
-    )
+      (= result (+ x x))
+      result)
+  ))
+
+  paxir! ~~(
+    (defmodule TestMod
+      (def yeo (z) z))
   )
 
   test "basic" do
@@ -20,6 +22,7 @@ defmodule PaxirTest do
     assert 2 == paxir!(~~((+ 1 1)))
     assert ~c"a" == paxir!(~~((identity [97])))
     assert double(3) == 6
+    assert TestMod.yeo(156) == 156
 
     var = 10
     assert 20 == paxir!(~~((double var)))
@@ -138,5 +141,21 @@ defmodule PaxirTest do
   test "call anonymous function" do
     local_identity = fn x -> x end
     assert :yep == paxir!(~~((local_identity :yep)))
+  end
+
+  test "defmodule" do
+    {:raw_section, _, [expr]} =
+      quote do: ~~((defmodule Mod (def fun (x) x)))
+
+    elixir_expr =
+      quote do
+        defmodule Mod do
+          def fun(x) do
+            x
+          end
+        end
+      end
+
+    assert Paxir.eval_expr(expr) == elixir_expr
   end
 end
