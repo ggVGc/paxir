@@ -67,19 +67,53 @@ defmodule PaxirTest do
     assert dict == %{double(2) => :yep}
   end
 
-  test "pattern match function arguments" do
-    {:raw_section, _, [expr]} =
-      quote do
-        ~~((def match_tuple ({a b}) a))
-      end
-
-    elixir_def =
-      quote do
-        def match_tuple({a, b}) do
-          a
+  describe "pattern match function arguments" do
+    test "tuple" do
+      {:raw_section, _, [tuple_def]} =
+        quote do
+          ~~((def match_tuple ({a b}) a))
         end
-      end
 
-    assert Paxir.eval_expr(expr) == elixir_def
+      elixir_tuple_def =
+        quote do
+          def match_tuple({a, b}) do
+            a
+          end
+        end
+
+      assert Paxir.eval_expr(tuple_def) == elixir_tuple_def
+    end
+
+    test "list" do
+      {:raw_section, _, [list_def]} =
+        quote do
+          ~~((def match_list ([a b]) a))
+        end
+
+      elixir_list_def =
+        quote do
+          def match_list([a, b]) do
+            a
+          end
+        end
+
+      assert Paxir.eval_expr(list_def) == elixir_list_def
+    end
+
+    test "literal" do
+      {:raw_section, _, [literal_def]} =
+        quote do
+          ~~((def match_literal (123) 99))
+        end
+
+      elixir_literal_def =
+        quote do
+          def match_literal(123) do
+            99
+          end
+        end
+
+      assert Paxir.eval_expr(literal_def) == elixir_literal_def
+    end
   end
 end
