@@ -121,21 +121,23 @@ defmodule PaxirTest do
     end
   end
 
+  def run_paxir(quoted_expr) do
+    {:raw_section, _, [inner_expr]} = quoted_expr
+    Paxir.eval_expr(inner_expr)
+  end
+
   test "anonymous function" do
-    {:raw_section, _, [expr]} =
-      quote do: ~~((fn (a) (= x a) x))
-
-    elixir_expr =
-      quote do
-        fn a ->
-          x = a
-          x
-        end
-      end
-
-    assert Paxir.eval_expr(expr) == elixir_expr
-    anon = paxir!(~~((fn (a) (= x a) x)))
-    assert anon.(:yeo) == :yeo
+    assert run_paxir(
+             quote do
+               ~~((fn (a) (= x a) x))
+             end
+           ) ==
+             (quote do
+                fn a ->
+                  x = a
+                  x
+                end
+              end)
   end
 
   test "call anonymous function" do
@@ -144,18 +146,17 @@ defmodule PaxirTest do
   end
 
   test "defmodule" do
-    {:raw_section, _, [expr]} =
-      quote do: ~~((defmodule Mod (def fun (x) x)))
-
-    elixir_expr =
-      quote do
-        defmodule Mod do
-          def fun(x) do
-            x
-          end
-        end
-      end
-
-    assert Paxir.eval_expr(expr) == elixir_expr
+    assert run_paxir(
+             quote do
+               ~~((defmodule Mod (def fun (x) x)))
+             end
+           ) ==
+             (quote do
+                defmodule Mod do
+                  def fun(x) do
+                    x
+                  end
+                end
+              end)
   end
 end
